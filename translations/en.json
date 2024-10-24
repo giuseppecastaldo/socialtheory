@@ -1,0 +1,15 @@
+{
+    "Login": {
+        "incorrectCredentials": "Incorrect credentials",
+        "accessDenied": "Access denied",
+        "login": "Login",
+        "email": "Email",
+        "password": "Password",
+        "signIn": "Sign in to your account",
+        "forgotPassword": "Forgot password",
+        "signInWithGoogle": "Sign in with Google",
+        "confirmPassword": "Confirm password",
+        "name": "Name",
+        "signUp": "Sign up"
+    }
+}

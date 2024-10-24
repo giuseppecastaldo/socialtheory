@@ -1,0 +1,15 @@
+{
+    "Login": {
+        "incorrectCredentials": "Credenziali non corrette",
+        "accessDenied": "Accesso negato",
+        "login": "Accedi",
+        "email": "Email",
+        "password": "Password",
+        "signIn": "Accedi al tuo account",
+        "forgotPassword": "Password dimenticata",
+        "signInWithGoogle": "Accedi con Google",
+        "confirmPassword": "Conferma password",
+        "name": "Nome",
+        "signUp": "Registrati"
+    }
+}
