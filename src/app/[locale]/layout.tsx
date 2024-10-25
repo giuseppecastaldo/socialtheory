@@ -17,13 +17,13 @@ import {
 import LogoutButton from "@/components/auth/logout-button";
 import {auth} from "@/libs/auth";
 import {Link} from "@/navigation";
-import {getUserByEmail} from "@/controllers/user";
+import {getUserById} from "@/controllers/user";
 
 const inter = Inter({subsets: ["latin"]});
 
 export const metadata: Metadata = {
-    title: "Giuseppe Castaldo - Boilerplate",
-    description: "Giuseppe Castaldo - Boilerplate",
+    title: "SocialTheory",
+    description: "SocialTheory is a social network for the modern age.",
 };
 
 export const viewport: Viewport = {
@@ -40,7 +40,7 @@ export default async function RootLayout({
 }>) {
     const messages = await getMessages();
     const session = await auth();
-    const user = await getUserByEmail(session?.user?.email as string);
+    const user = session && await getUserById(session?.user?.id as string);
 
     const emailHash = createHash("md5")
         .update(user?.email?.trim().toLowerCase() || "")

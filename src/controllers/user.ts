@@ -2,10 +2,11 @@
 
 import PasswordValidator from 'password-validator';
 import prisma from "@/libs/prisma";
-import { hashSync } from "bcryptjs";
-import { z } from 'zod';
+import {compareSync, hashSync} from "bcryptjs";
+import {z} from 'zod';
 import {uploadFile} from "@/libs/s3";
 import {randomUUID} from "node:crypto";
+import {getTranslations} from 'next-intl/server';
 
 const passwordSchema = new PasswordValidator();
 passwordSchema
@@ -18,26 +19,28 @@ passwordSchema
     .has().symbols();
 
 const createUserSchema = z.object({
-    name: z.string().min(1, 'Name is required'),
-    email: z.string().email('Invalid email address'),
+    name: z.string().min(1, 'nameRequired'),
+    email: z.string().email('invalidEmail'),
     password: z.string(),
     password2: z.string(),
 }).refine(data => data.password === data.password2, {
-    message: "Passwords do not match",
+    message: 'passwordsDoNotMatch',
     path: ["password2"],
 });
 
 export async function createUser(name: string, email: string, password: string, password2: string) {
-    const validationResult = createUserSchema.safeParse({ name, email, password, password2 });
+    const t = await getTranslations('Profile');
+
+    const validationResult = createUserSchema.safeParse({name, email, password, password2});
     if (!validationResult.success) {
         return {
-            error: validationResult.error.errors.map(err => err.message).join(', '),
+            error: validationResult.error.errors.map(err => t(err.message)).join(', '),
         };
     }
 
     if (!passwordSchema.validate(password)) {
         return {
-            error: 'Password does not meet the requirements: at least 8 characters long, no more than 100 characters, at least one uppercase letter, one lowercase letter, one digit, one symbol, and no spaces',
+            error: t('passwordRequirements'),
         };
     }
 
@@ -54,18 +57,18 @@ export async function createUser(name: string, email: string, password: string, 
                 email: true
             }
         });
-        return { user };
+        return {user};
     } catch (err) {
         return {
-            error: 'An error occurred while creating the user',
+            error: t('userCreationError'),
         };
     }
 }
 
-export async function getUserByEmail(email: string | undefined | null) {
+export async function getUserById(id: string) {
     return prisma.user.findUnique({
         where: {
-            email: email as string
+            id
         },
         select: {
             id: true,
@@ -76,36 +79,120 @@ export async function getUserByEmail(email: string | undefined | null) {
     });
 }
 
-export async function updateUser(id: string, name: string | null, email: string, image: string) {
+export async function updateUser(id: string, name: string | null, email: string, image: string | null) {
+    const t = await getTranslations('Profile');
+
     function decodeBase64ToBuffer(base64: string): Buffer {
         const matches = base64.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
         if (!matches || matches.length !== 3) {
-            throw new Error('Formato Base64 non valido');
+            throw new Error(t('invalidBase64'));
         }
 
         return Buffer.from(matches[2], 'base64');
     }
 
-    const imageBuffer = decodeBase64ToBuffer(image);
+    if (!name || !email) {
+        return {
+            error: t('nameEmailRequired'),
+        };
+    }
 
+    let imageUrl = undefined;
+    if (image) {
+        const fileName = id + randomUUID() + '.jpg';
+        const imageBuffer = decodeBase64ToBuffer(image);
+        await uploadFile(imageBuffer, 'image/jpeg', fileName);
+        imageUrl = process.env.R2_PUBLIC_ENDPOINT + fileName;
+    }
 
-    const fileName = id + randomUUID() + '.jpg';
-    await uploadFile(imageBuffer, 'image/jpeg', fileName);
+    try {
+        const user = await prisma.user.update({
+            where: {
+                id
+            },
+            data: {
+                name,
+                email,
+                image: imageUrl
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true
+            }
+        });
 
-    return prisma.user.update({
+        return {user};
+    } catch (err) {
+        return {
+            error: t('userUpdateError'),
+        };
+    }
+}
+
+export async function updatePassword(id: string, oldPassword: string, password: string, password2: string) {
+    const t = await getTranslations('Profile');
+
+    if (!oldPassword || !password || !password2) {
+        return {
+            error: t('allFieldsRequired'),
+        };
+    }
+
+    const user = await prisma.user.findUnique({
+        where: {
+            id,
+        },
+    });
+
+    if (!user || !(compareSync(oldPassword, user.password!))) {
+        return {
+            error: t('invalidCredentials'),
+        };
+    }
+
+    if (password !== password2) {
+        return {
+            error: t('passwordsDoNotMatch'),
+        };
+    }
+
+    if (!passwordSchema.validate(password)) {
+        return {
+            error: t('passwordRequirements'),
+        };
+    }
+
+    try {
+        const user = await prisma.user.update({
+            where: {
+                id
+            },
+            data: {
+                password: hashSync(password)
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true
+            }
+        });
+
+        return {user};
+    } catch (err) {
+        return {
+            error: t('passwordUpdateError'),
+        }
+    }
+
+}
+
+export async function deleteUser(id: string) {
+    return prisma.user.delete({
         where: {
             id
-        },
-        data: {
-            name,
-            email,
-            image: process.env.R2_PUBLIC_ENDPOINT + fileName
-        },
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true
         }
     });
 }

@@ -8,6 +8,7 @@ import {Input} from "@/components/ui/input";
 import {Link, useRouter} from "@/navigation";
 import {createUser} from "@/controllers/user";
 import {useState} from "react";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 
 type Inputs = {
     name: string;
@@ -47,9 +48,12 @@ export default function Register() {
     return (
         <div className="flex justify-center items-center h-screen bg-gray-100">
             <div className="max-w-md w-full p-8 bg-white rounded-xl shadow-lg">
-                {error && (
-                    <div className="text-red-500">{error}</div>
-                )}
+                {error && <Alert variant="destructive">
+                    <AlertTitle>{t('error')}</AlertTitle>
+                    <AlertDescription>
+                        {error}
+                    </AlertDescription>
+                </Alert>}
 
                 <div className="flex justify-center items-center p-6">
                     <img

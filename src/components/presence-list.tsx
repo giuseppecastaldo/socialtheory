@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useState, useEffect} from "react";
-import {usePusher} from "../hooks/use-pusher";
+import {usePusher} from "./hooks/use-pusher";
 import {PresenceChannel} from "pusher-js";
 import {createHash} from "crypto";
 import {useSession} from "next-auth/react";

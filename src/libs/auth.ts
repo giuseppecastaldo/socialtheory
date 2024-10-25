@@ -39,7 +39,19 @@ const options: NextAuthConfig = {
     callbacks: {
         async signIn() {
             return true;
-        }
+        },
+        jwt({ token, account, user }) {
+            if (account) {
+                token.accessToken = account.access_token
+                token.id = user?.id
+            }
+            return token
+        },
+        session({ session, token }) {
+            session.user.id = <string> token.id;
+
+            return session;
+        },
     },
     experimental: { enableWebAuthn: true }
 }

@@ -6,12 +6,24 @@ import {Avatar} from "@files-ui/react";
 import {SubmitHandler, useForm} from "react-hook-form";
 import {useEffect, useState} from "react";
 import {Button} from "@/components/ui/button";
-import {updateUser} from "@/controllers/user";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {deleteUser, updatePassword, updateUser} from "@/controllers/user";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription, DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import {signOut} from "next-auth/react";
+import {useTranslations} from 'next-intl';
 
 const InfoForm = ({user}: {
     user: { id: string, name: string | null, email: string, image: string | null } | null
 }) => {
+    const t = useTranslations('Profile');
+
     type Inputs = {
         avatar: string;
         name: string;
@@ -20,6 +32,7 @@ const InfoForm = ({user}: {
 
     const [imageSource, setImageSource] = useState<File | string>(user?.image || "");
     const [success, setSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const convertImageToBase64 = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
@@ -28,7 +41,7 @@ const InfoForm = ({user}: {
                 resolve(reader.result as string);
             };
             reader.onerror = () => {
-                reject(new Error("Errore durante la conversione dell'immagine in Base64"));
+                reject(new Error(t('imageError')));
             };
             reader.readAsDataURL(file);
         });
@@ -39,13 +52,20 @@ const InfoForm = ({user}: {
                                                        email
                                                    }) => {
         if (user) {
-            const imageBase64 = await convertImageToBase64(imageSource as File);
+            let imageBase64 = null;
+            if (imageSource instanceof File) {
+                imageBase64 = await convertImageToBase64(imageSource as File);
+            }
+
             const updated = await updateUser(user.id, name, email, imageBase64);
 
-            if (updated) {
-                setSuccess(true);
+            if (updated.error) {
+                setError(updated.error);
                 return;
             }
+
+            setSuccess(true);
+            setError(null);
         }
 
     };
@@ -67,20 +87,28 @@ const InfoForm = ({user}: {
     return (
         <Card>
             <CardHeader>
-                <h3 className="text-xl font-bold">Info</h3>
+                <h3 className="text-xl font-bold">{t('info')}</h3>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     {success && <Alert>
-                        <AlertTitle>Done!</AlertTitle>
+                        <AlertTitle>{t('done')}</AlertTitle>
                         <AlertDescription>
-                            Your profile has been updated successfully.
+                            {t('profileUpdated')}
                         </AlertDescription>
                     </Alert>}
+
+                    {error && <Alert variant="destructive">
+                        <AlertTitle>{t('error')}</AlertTitle>
+                        <AlertDescription>
+                            {error}
+                        </AlertDescription>
+                    </Alert>}
+
                     <Avatar
                         alt="Avatar"
-                        emptyLabel={"Change avatar"}
-                        changeLabel={"Change avatar"}
+                        emptyLabel={t('changeAvatar')}
+                        changeLabel={t('changeAvatar')}
                         required
                         src={imageSource}
                         onChange={(file) => setImageSource(file)}
@@ -92,18 +120,136 @@ const InfoForm = ({user}: {
                         type="text"
                         {...register("name")}
                         required
-                        placeholder="Name"
+                        placeholder={t('name')}
                     />
 
                     <Input
                         type="email"
                         {...register("email")}
                         required
-                        placeholder="Email"
+                        placeholder={t('email')}
                     />
 
-                    <Button>Save</Button>
+                    <Button>{t('save')}</Button>
                 </form>
+            </CardContent>
+        </Card>
+    )
+}
+
+const PasswordChangeForm = ({user}: {
+    user: { id: string, name: string | null, email: string, image: string | null } | null
+}) => {
+    const t = useTranslations('Profile');
+    type Inputs = {
+        oldPassword: string;
+        password: string;
+        password2: string;
+    };
+
+    const {
+        register,
+        handleSubmit
+    } = useForm<Inputs>();
+
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
+
+    const onSubmit: SubmitHandler<Inputs> = async ({
+                                                       oldPassword,
+                                                       password,
+                                                       password2
+                                                   }) => {
+        const result = await updatePassword(user?.id as string, oldPassword, password, password2);
+
+        if (result.error) {
+            setError(result.error);
+            return;
+        }
+
+        setSuccess(true);
+        setError(null);
+    }
+
+    return (
+        <Card className="mt-4">
+            <CardHeader>
+                <h3 className="text-xl font-bold">{t('changePassword')}</h3>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    {success && <Alert>
+                        <AlertTitle>{t('done')}</AlertTitle>
+                        <AlertDescription>
+                            {t('passwordUpdated')}
+                        </AlertDescription>
+                    </Alert>}
+
+                    {error && <Alert variant="destructive">
+                        <AlertTitle>{t('error')}</AlertTitle>
+                        <AlertDescription>
+                            {error}
+                        </AlertDescription>
+                    </Alert>}
+
+                    <Input
+                        type="password"
+                        {...register("oldPassword")}
+                        placeholder={t('oldPassword')}
+                    />
+
+                    <Input
+                        type="password"
+                        {...register("password")}
+                        placeholder={t('newPassword')}
+                    />
+
+                    <Input
+                        type="password"
+                        {...register("password2")}
+                        placeholder={t('confirmPassword')}
+                    />
+
+                    <Button type="submit">{t('change')}</Button>
+                </form>
+            </CardContent>
+        </Card>
+    )
+}
+
+const DeleteAccount = ({user}: {
+    user: { id: string, name: string | null, email: string, image: string | null } | null
+}) => {
+    const t = useTranslations('Profile');
+    const deleteAccount = async () => {
+        await deleteUser(user?.id as string);
+        await signOut({callbackUrl: "/"})
+    }
+
+    return (
+        <Card className="mt-4">
+            <CardHeader>
+                <h3 className="text-xl font-bold">{t('dangerZone')}</h3>
+            </CardHeader>
+            <CardContent>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="destructive">
+                            {t('deleteAccount')}
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{t('areYouSure')}</DialogTitle>
+                            <DialogDescription>
+                                {t('actionIrreversible')}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button onClick={deleteAccount} variant="destructive">{t('confirm')}</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </CardContent>
         </Card>
     )
@@ -116,35 +262,9 @@ export default function ProfileForm({user}: {
         <div className="mt-4 w-full">
             <InfoForm user={user}/>
 
-            <Card className="mt-4">
-                <CardHeader>
-                    <h3 className="text-xl font-bold">Modifica la tua password</h3>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <Input
-                        type="password"
-                        placeholder="Password"
-                    />
+            <PasswordChangeForm user={user}/>
 
-                    <Input
-                        type="password"
-                        placeholder="Conferma password"
-                    />
-
-                    <Button>Modifica</Button>
-                </CardContent>
-            </Card>
-
-            <Card className="mt-4">
-                <CardHeader>
-                    <h3 className="text-xl font-bold">Danger Zone</h3>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <Button variant="destructive" className="bg-red-500 text-white p-2 rounded-md">Delete
-                        Account</Button>
-                </CardContent>
-            </Card>
+            <DeleteAccount user={user}/>
         </div>
     );
 }
-

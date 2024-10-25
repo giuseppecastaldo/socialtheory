@@ -8,6 +8,7 @@ import {useTranslations} from "next-intl";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Link} from "@/navigation";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 
 type Inputs = {
     email: string;
@@ -40,16 +41,22 @@ export default function Login() {
     return (
         <div className="flex justify-center items-center h-screen bg-gray-100">
             <div className="max-w-md w-full p-8 bg-white rounded-xl shadow-lg">
-                {searchParams.get("error") === "CredentialsSignin" ? (
-                    <div className="text-red-500">{t('incorrectCredentials')}</div>
-                ) : (
-                    <></>
-                )}
-                {searchParams.get("error") === "AccessDenied" ? (
-                    <div className="text-red-500">{t('accessDenied')}</div>
-                ) : (
-                    <></>
-                )}
+                {searchParams.get("error") === "CredentialsSignin" &&
+                    <Alert variant="destructive">
+                        <AlertTitle>{t('error')}</AlertTitle>
+                        <AlertDescription>
+                            {t('incorrectCredentials')}
+                        </AlertDescription>
+                    </Alert>}
+
+
+                {searchParams.get("error") === "AccessDenied" &&
+                    <Alert variant="destructive">
+                        <AlertTitle>{t('error')}</AlertTitle>
+                        <AlertDescription>
+                            {t('accessDenied')}
+                        </AlertDescription>
+                    </Alert>}
 
                 <div className="flex justify-center items-center p-6">
                     <img

@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'Giuseppe Castaldo - Boilerplate',
-        short_name: 'Giuseppe Castaldo - Boilerplate',
-        description: 'Giuseppe Castaldo - Boilerplate',
+        name: 'SocialTheory',
+        short_name: 'SocialTheory',
+        description: 'SocialTheory is a social network for the modern age.',
         start_url: '/',
         display: 'standalone',
         background_color: '#fff',

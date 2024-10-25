@@ -1,10 +1,10 @@
 import React from 'react';
 import {getPosts} from "@/controllers/post";
-import PresenceList from "@/components/pusher/presence-list";
+import PresenceList from "@/components/presence-list";
 import {auth} from "@/libs/auth";
 import UserPosts from "@/components/user-posts";
 import {Post} from "@prisma/client";
-import {getUserByEmail} from "@/controllers/user";
+import {getUserById} from "@/controllers/user";
 
 type PostWithUser = Post & {
     user: {
@@ -17,7 +17,7 @@ type PostWithUser = Post & {
 const PostsPage = async () => {
     const userPosts = await getPosts();
     const loggedInUser = await auth();
-    const user = await getUserByEmail(loggedInUser?.user?.email as string);
+    const user = await getUserById(loggedInUser?.user?.id as string);
 
     return (
         <div className="flex flex-col lg:flex-row h-screen">
