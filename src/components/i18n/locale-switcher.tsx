@@ -9,7 +9,7 @@ export default function LocaleSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const changeLocale = (locale: string) => {
+  const changeLocale = (locale: "en" | "it") => {
     router.push(pathname, { locale });
   };
 
@@ -18,14 +18,14 @@ export default function LocaleSwitcher() {
       {locales.map((locale) => (
         <div key={locale} className={`${locale === currentLocale ? "bg-gray-100 rounded-lg p-1" : ""}`}>
           <button
-            onClick={() => changeLocale(locale)}
+            onClick={() => changeLocale(locale as "en" | "it")}
             className={`cursor-pointer`}
           >
             <img
               src={`https://flagsapi.com/${
                 locale.toUpperCase() === "EN" ? "GB" : locale.toUpperCase()
               }/flat/64.png`}
-              alt="German Flag"
+              alt="Flag"
               className="w-4 h-4"
             />
           </button>
