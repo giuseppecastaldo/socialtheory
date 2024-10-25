@@ -51,25 +51,25 @@ Per eseguire SocialTheory in locale, seguire questi passaggi:
    Creare un file `.env` nella root del progetto e compilare quanto segue:
 
    ```env
-AUTH_SECRET=
-AUTH_TRUST_HOST=
-NEXTAUTH_URL=
-
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-
-MYSQL_URL=
-
-PUSHER_APP_ID=
-NEXT_PUBLIC_PUSHER_APP_KEY=
-PUSHER_APP_SECRET=
-NEXT_PUBLIC_PUSHER_CLUSTER=
-
-R2_BUCKET_NAME=
-R2_ACCESS_KEY_ID=
-R2_SECRET_ACCESS_KEY=
-R2_ENDPOINT=
-R2_PUBLIC_ENDPOINT=
+    AUTH_SECRET=
+    AUTH_TRUST_HOST=
+    NEXTAUTH_URL=
+    
+    GOOGLE_CLIENT_ID=
+    GOOGLE_CLIENT_SECRET=
+    
+    MYSQL_URL=
+    
+    PUSHER_APP_ID=
+    NEXT_PUBLIC_PUSHER_APP_KEY=
+    PUSHER_APP_SECRET=
+    NEXT_PUBLIC_PUSHER_CLUSTER=
+    
+    R2_BUCKET_NAME=
+    R2_ACCESS_KEY_ID=
+    R2_SECRET_ACCESS_KEY=
+    R2_ENDPOINT=
+    R2_PUBLIC_ENDPOINT=
    ```
 
 4. **Configurare il Database**
